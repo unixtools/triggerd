@@ -4,7 +4,10 @@ clean:
 	rm *.o
 
 triggerd: triggerd.o
-	
+	$(CC) -o triggerd triggerd.o 
+
+triggerd.o: triggerd.c
+	$(CC) -c triggerd.c
 
 dist: clean
 	cp -pr ../src ../triggerd
