@@ -1,13 +1,19 @@
+SBINDIR=/usr/sbin
+
 all: triggerd
 
 clean:
-	rm *.o
+	rm -f *.o
 
 triggerd: triggerd.o
 	$(CC) -o triggerd triggerd.o 
 
 triggerd.o: triggerd.c
 	$(CC) -c triggerd.c
+
+install:
+	mkdir -p $(SBINDIR)
+	install -m0755 triggerd $(SBINDIR)/triggerd
 
 dist: clean
 	cp -pr ../src ../triggerd
