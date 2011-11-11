@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
 
     /* add bind ip */
 
-    while ((c = getopt(argc, argv, ":de:fnhp:w:s")) != -1) {
+    while ((c = getopt(argc, argv, ":dfsne:p:w:h")) != -1) {
         switch (c) {
         case 'd':
             DEBUG = 1;
@@ -171,7 +171,7 @@ int main(int argc, char *argv[])
             exec_cmd = strdup(optarg);
             break;
 
-        case 'l':
+        case 'p':
             Debug(("spawning port listen thread for '%s'\n", optarg));
             rc = pthread_create(&tids[curtid++], NULL,
                                 thr_watch_port, (void *)strdup(optarg));
