@@ -1,3 +1,10 @@
+/*
+Begin-Doc
+Name: triggerd.d
+Description: Main program for triggerd code
+End-Doc
+*/
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -10,8 +17,6 @@
 #include "debug.h"
 #include "tcp.h"
 #include "util.h"
-
-#define TSTAMP_FILE "/local/tsmapp/web/last_publish.txt"
 
 char *exec_cmd = NULL;
 

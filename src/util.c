@@ -1,6 +1,9 @@
 /*
- * Fork into background and return pid of new background process
- */
+Begin-Doc
+Name: util.c
+Description: utility/helper routines
+End-Doc
+*/
 
 #include <stdio.h>
 #include <stdlib.h>

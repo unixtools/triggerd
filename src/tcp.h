@@ -1,3 +1,10 @@
+/*
+Begin-Doc
+Name: tcp.h
+Description: tcp routine headers/prototypes
+End-Doc
+*/
+
 #ifndef TCP_H
 #define TCP_H
 

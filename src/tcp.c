@@ -1,8 +1,10 @@
 /*
-File:		tcp.c
-Module:		TCP library routines
+Begin-Doc
+Name:		tcp.c
+Type:		TCP library routines
 Description:	Routines for use by all the other modules for doing anything
 		related to access to the sockets, transmissions of data, etc.
+End-Doc
 */
 
 /*

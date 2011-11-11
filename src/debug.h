@@ -1,4 +1,10 @@
-/* Debugging Routines */
+/*
+Begin-Doc
+Name: debug.h
+Description: headers/protototypes for debug.c routines
+End-Doc
+*/
+
 #ifndef DEBUG_H
 #define DEBUG_H
 
