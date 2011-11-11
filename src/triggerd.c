@@ -122,11 +122,12 @@ void *thr_watch_port(void *threadarg)
     }
 }
 
-#define MAX_CMDS = 100;
+#define MAX_CMDS 100
+#define MAX_THREADS 100
 
 int main(int argc, char *argv[])
 {
-    pthread_t tids[100];
+    pthread_t tids[MAX_THREADS];
     int curtid = 0;
     char *cmds[MAX_CMDS + 1];
     int numcmds = 0;;
