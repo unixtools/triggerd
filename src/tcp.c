@@ -247,7 +247,7 @@ int OpenListener(int port, int count)
 char *clientaddr(int fd)
 {
     struct sockaddr_in cli_addr;
-    static char address[40];
+    char address[250] = "\0";
     int len;
 
     len = sizeof(cli_addr);
@@ -255,7 +255,7 @@ char *clientaddr(int fd)
 
     strcpy(address, inet_ntoa(cli_addr.sin_addr));
 
-    return address;
+    return strdup(address);
 }
 
 int clientport(int fd)

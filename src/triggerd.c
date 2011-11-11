@@ -26,32 +26,10 @@ End-Doc
 int dry_run = 0;
 int daemonize = 1;
 int skip_first = 0;
+char *syslog_tag = NULL;
 
 long updates = 0;
 pthread_mutex_t updates_mutex;
-
-void PrintTime(void)
-{
-    char outstr[200];
-    time_t t;
-    struct tm *tmp;
-
-    outstr[0] = 0;
-
-    t = time(NULL);
-    tmp = localtime(&t);
-    if (tmp == NULL) {
-        perror("localtime");
-        return;
-    }
-
-    if (strftime(outstr, sizeof(outstr), "%F %T", tmp) == 0) {
-        fprintf(stderr, "strftime returned 0");
-        return;
-    }
-
-    printf("%s", outstr);
-}
 
 void mark_updated(void)
 {
@@ -84,6 +62,11 @@ void *thr_watch_file(void *threadarg)
                     Debug(("mtime of '%s' changed, incrementing updates\n",
                            file));
                     mark_updated();
+                    if (syslog_tag) {
+                        syslog(LOG_DEBUG,
+                               "mtime of '%s' changed, triggering updates",
+                               file);
+                    }
                 }
             }
         } else {
@@ -102,22 +85,38 @@ void *thr_watch_port(void *threadarg)
     struct sockaddr_in cli_addr;
     unsigned int clilen;
     int newsockfd;
+    char *cliaddr;
 
     server_port = atoi((char *)threadarg);
 
     sockfd = OpenListener(server_port, 2048);
     if (!sockfd) {
         Error(("Unable to open listener port! (%s)\n", strerror(errno)));
+        if (syslog_tag) {
+            syslog(LOG_ERR, "unable to open listener port (%s)\n",
+                   strerror(errno));
+        }
+        exit(1);
     }
 
     while (1) {
         clilen = sizeof(cli_addr);
         newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
-        Debug(("got a socket connection\n"));
-
-        mark_updated();
 
         if (newsockfd) {
+            Debug(("got a socket connection\n"));
+            cliaddr = clientaddr(newsockfd);
+
+            if (syslog_tag) {
+                syslog(LOG_DEBUG,
+                       "got a socket connection on port %d from %s, triggering updates",
+                       server_port, cliaddr);
+            }
+
+            free(cliaddr);
+
+            mark_updated();
+
             close(newsockfd);
         }
     }
@@ -141,7 +140,6 @@ int main(int argc, char *argv[])
     int errcnt = 0;
     int changed;
     int watches = 0;
-    char *syslog_tag = NULL;
 
     ARGV0 = argv[0];
 
@@ -286,7 +284,9 @@ int main(int argc, char *argv[])
                     char cmdbuf[5000];
 
                     while (fgets(cmdbuf, 5000, cmdfh)) {
-                        Trace(("%s", cmdbuf));
+                        if (!daemonize && !syslog_tag) {
+                            Trace(("%s", cmdbuf));
+                        }
                         syslog(LOG_DEBUG, "%s", cmdbuf);
                     }
                     fclose(cmdfh);
