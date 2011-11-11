@@ -17,6 +17,7 @@ End-Doc
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <sys/errno.h>
+#include <sys/syslog.h>
 
 #include "debug.h"
 #include "tcp.h"
@@ -273,9 +274,27 @@ int main(int argc, char *argv[])
 
 /* should do with popen so we can support syslog or stdout within daemon */
             for (i = 0; i < numcmds; i++) {
+                FILE *cmdfh;
+
                 Debug(("Executing: %s\n", cmds[i]));
                 if (syslog_tag) {
                     syslog(LOG_INFO, "executing: %s", cmds[i]);
+                }
+
+                cmdfh = popen(cmds[i], "r");
+                if (cmdfh) {
+                    char cmdbuf[5000];
+
+                    while (fgets(cmdbuf, 5000, cmdfh)) {
+                        Trace(("%s", cmdbuf));
+                        syslog(LOG_DEBUG, "%s", cmdbuf);
+                    }
+                    fclose(cmdfh);
+                } else {
+                    Debug(("Failed to open pipe for command!\n"));
+                    if (syslog_tag) {
+                        syslog(LOG_ERR, "failed to open pipe for command");
+                    }
                 }
 
                 system(cmds[i]);
