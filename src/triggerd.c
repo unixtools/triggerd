@@ -140,6 +140,7 @@ int main(int argc, char *argv[])
     int errcnt = 0;
     int changed;
     int watches = 0;
+    char *syslog_tag = NULL;
 
     ARGV0 = argv[0];
 
@@ -148,7 +149,7 @@ int main(int argc, char *argv[])
 
     /* add bind ip */
 
-    while ((c = getopt(argc, argv, ":dfsne:p:w:h")) != -1) {
+    while ((c = getopt(argc, argv, ":dfsne:p:w:ht:")) != -1) {
         if (numcmds == MAX_CMDS) {
             Error(("Max cmds reached!\n"));
             exit(1);
@@ -198,6 +199,11 @@ int main(int argc, char *argv[])
             watches++;
             break;
 
+        case 't':
+            Debug(("setting syslog tag '%s'.\n", optarg));
+            syslog_tag = strdup(optarg);
+            break;
+
         case ':':
             fprintf(stderr, "Option -%c requires argument!\n", optopt);
             errcnt++;
@@ -223,13 +229,9 @@ int main(int argc, char *argv[])
             Error(("\t -p port  - Enable tcp listen and sets port (can be repeated)\n"));
             Error(("\t -e cmd   - Sets execution command (can be repeated)\n"));
             Error(("\t -s       - Skip first update at startup\n"));
+            Error(("\t -t tag   - Enable syslog output labelled with 'tag'\n"));
             exit(1);
         }
-    }
-
-    /* Become daemon */
-    if (daemonize) {
-        BeDaemon(argv[0]);
     }
 
     if (numcmds == 0) {
@@ -240,6 +242,16 @@ int main(int argc, char *argv[])
     if (watches == 0) {
         Error(("No watch conditions specified, terminating.\n"));
         exit(1);
+    }
+
+    /* Become daemon */
+    if (daemonize) {
+        BeDaemon(argv[0]);
+    }
+
+    /* Init syslogs */
+    if (syslog_tag) {
+        openlog(syslog_tag, LOG_PID, LOG_DAEMON);
     }
 
     /* main loop running updates */
@@ -255,14 +267,24 @@ int main(int argc, char *argv[])
 
         if (changed) {
             Debug(("update triggered, executing commands...\n"));
+            if (syslog_tag) {
+                syslog(LOG_INFO, "update triggered, executing commands");
+            }
 
 /* should do with popen so we can support syslog or stdout within daemon */
             for (i = 0; i < numcmds; i++) {
                 Debug(("Executing: %s\n", cmds[i]));
+                if (syslog_tag) {
+                    syslog(LOG_INFO, "executing: %s", cmds[i]);
+                }
+
                 system(cmds[i]);
             }
 
             Debug(("execution of commands completed...\n"));
+            if (syslog_tag) {
+                syslog(LOG_INFO, "execution of commands completed");
+            }
         }
         sleep(1);
     }
