@@ -12,6 +12,8 @@
 	printf a; fflush(stdout); }
 #define Error(a) printf("%s[%d]: ", ARGV0, getpid()); \
 	printf a; fflush(stdout);
+#define Trace(a) printf("%s[%d]: ", ARGV0, getpid()); \
+	printf a; fflush(stdout);
 #define NullCk(s)    ((s) ? (s) : "")
 extern int DEBUG;
 extern char *ARGV0;

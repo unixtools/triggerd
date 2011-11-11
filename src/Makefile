@@ -7,7 +7,7 @@ clean:
 	rm -f *.o
 
 triggerd: triggerd.o tcp.o util.o debug.o
-	$(CC) -o triggerd triggerd.o tcp.o util.o debug.o
+	$(CC) -o triggerd triggerd.o tcp.o util.o debug.o -lpthread
 
 install:
 	mkdir -p $(SBINDIR)
