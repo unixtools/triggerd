@@ -2,7 +2,7 @@
 #define TCP_H
 
 /* Protoypes for functions and global variables in tcp.c */
-int readline (char *ptr, int maxlen, int fd);
+int readline(char *ptr, int maxlen, int fd);
 int writeline(int fd, char *ptr);
 int writen(register int fd, register char *ptr, register int nbytes);
 char *resolve(char *addr);
@@ -13,6 +13,5 @@ int OpenListener(int port, int count);
 char *clientaddr(int fd);
 int clientport(int fd);
 int validaddr(char *addr);
-
 
 #endif

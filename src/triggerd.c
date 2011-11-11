@@ -22,26 +22,25 @@ int skip_first = 0;
 long updates = 0;
 pthread_mutex_t updates_mutex;
 
-
 void PrintTime(void)
 {
-           char outstr[200];
-           time_t t;
-           struct tm *tmp;
+    char outstr[200];
+    time_t t;
+    struct tm *tmp;
 
-            outstr[0] = 0;
+    outstr[0] = 0;
 
-           t = time(NULL);
-           tmp = localtime(&t);
-           if (tmp == NULL) {
-               perror("localtime");
-            return;
-           }
+    t = time(NULL);
+    tmp = localtime(&t);
+    if (tmp == NULL) {
+        perror("localtime");
+        return;
+    }
 
-           if (strftime(outstr, sizeof(outstr), "%F %T", tmp) == 0) {
-               fprintf(stderr, "strftime returned 0");
-                return;
-           }
+    if (strftime(outstr, sizeof(outstr), "%F %T", tmp) == 0) {
+        fprintf(stderr, "strftime returned 0");
+        return;
+    }
 
     printf("%s", outstr);
 }
@@ -54,58 +53,47 @@ void mark_updated(void)
     Debug(("updates new value (%ld)\n", updates));
     pthread_mutex_unlock(&updates_mutex);
 }
-    
 
 void *thr_watch_file(void *threadarg)
 {
-	struct stat curstat, oldstat;
+    struct stat curstat, oldstat;
     int res;
     int first = 1;
-    char *file = (char*)threadarg;
+    char *file = (char *)threadarg;
 
-	/* Main loop */
-	bzero((char *)&oldstat, sizeof(struct stat));
-	while ( 1 )
-	{	
-		res = stat(file, &curstat);
-		if ( ! res )
-		{
-			if ( curstat.st_mtime != oldstat.st_mtime )
-			{
-				oldstat = curstat;
+    /* Main loop */
+    bzero((char *)&oldstat, sizeof(struct stat));
+    while (1) {
+        res = stat(file, &curstat);
+        if (!res) {
+            if (curstat.st_mtime != oldstat.st_mtime) {
+                oldstat = curstat;
 
-                if ( skip_first && first )
-                {
-                    Debug(("mtime of '%s' changed, skipping initial update\n", file));
-                }
-                else
-                {
-                    Debug(("mtime of '%s' changed, incrementing updates\n", file));
+                if (skip_first && first) {
+                    Debug(("mtime of '%s' changed, skipping initial update\n",
+                           file));
+                } else {
+                    Debug(("mtime of '%s' changed, incrementing updates\n",
+                           file));
                     mark_updated();
                 }
-			}
-		}
-        else
-        {
+            }
+        } else {
             Debug(("stat of '%s' failed\n", file));
         }
 
         first = 0;
-		sleep(1);
-	}
+        sleep(1);
+    }
 }
 
 void *thr_watch_port(void *threadarg)
 {
-   
-    while (1)
-    {
 
+    while (1) {
 
     }
 }
-
-
 
 int main(int argc, char *argv[])
 {
@@ -127,12 +115,10 @@ int main(int argc, char *argv[])
 
     /* add bind ip */
 
-    while ( (c=getopt(argc, argv, ":de:fnhp:w:s") ) != -1 )
-    {
-        switch(c)
-        {
+    while ((c = getopt(argc, argv, ":de:fnhp:w:s")) != -1) {
+        switch (c) {
         case 'd':
-            DEBUG=1;
+            DEBUG = 1;
             Debug(("enabled debug output\n"));
             break;
 
@@ -158,19 +144,20 @@ int main(int argc, char *argv[])
 
         case 'l':
             Debug(("spawning port listen thread for '%s'\n", optarg));
-            rc = pthread_create(&tids[curtid++], NULL, thr_watch_port, (void *)strdup(optarg));
+            rc = pthread_create(&tids[curtid++], NULL,
+                                thr_watch_port, (void *)strdup(optarg));
             watches++;
             break;
 
         case 'w':
             Debug(("spawning watch trigger thread for '%s'.\n", optarg));
-            rc = pthread_create(&tids[curtid++], NULL, thr_watch_file, (void *)strdup(optarg));
+            rc = pthread_create(&tids[curtid++], NULL,
+                                thr_watch_file, (void *)strdup(optarg));
             watches++;
             break;
 
         case ':':
-            fprintf(stderr, "Option -%c requires argument!\n",
-                optopt);
+            fprintf(stderr, "Option -%c requires argument!\n", optopt);
             errcnt++;
             break;
 
@@ -184,8 +171,7 @@ int main(int argc, char *argv[])
             break;
         }
 
-        if (errcnt)
-        {
+        if (errcnt) {
             Error(("Usage:\n"));
             Error(("\t%s <arguments>\n\n", ARGV0));
             Error(("\t -h       - Prints help\n"));
@@ -199,37 +185,31 @@ int main(int argc, char *argv[])
         }
     }
 
-	/* Become daemon */
-    if ( daemonize )
-    {
+    /* Become daemon */
+    if (daemonize) {
         BeDaemon(argv[0]);
     }
 
-    if ( ! exec_cmd )
-    {
+    if (!exec_cmd) {
         Error(("No exec cmd specified, terminating.\n"));
     }
 
-    if ( ! watches )
-    {
+    if (!watches) {
         Error(("No watch conditions specified, terminating.\n"));
     }
 
     /* main loop running updates */
-    while ( 1 )
-    {
+    while (1) {
         changed = 0;
 
         pthread_mutex_lock(&updates_mutex);
-        if ( curupdates != updates )
-        {
+        if (curupdates != updates) {
             curupdates = updates;
             changed = 1;
         }
         pthread_mutex_unlock(&updates_mutex);
-        
-        if ( changed )
-        {
+
+        if (changed) {
             Debug(("update triggered, executing commands...\n"));
 
 /* should do with popen so we can support syslog or stdout within daemon */
@@ -238,4 +218,3 @@ int main(int argc, char *argv[])
         sleep(1);
     }
 }
-

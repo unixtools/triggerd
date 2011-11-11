@@ -19,3 +19,7 @@ dist: clean
 	rm -f ../binaries/triggerd.tar.gz
 	cd .. && gtar -czvf binaries/triggerd.tar.gz triggerd
 	rm -rf ../triggerd
+
+indent:
+	indent -linux -nut -ts4 -i4 *.c *.h
+	rm -f *~
