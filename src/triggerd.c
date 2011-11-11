@@ -13,6 +13,10 @@ End-Doc
 #include <time.h>
 #include <string.h>
 #include <pthread.h>
+#include <error.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <sys/errno.h>
 
 #include "debug.h"
 #include "tcp.h"
@@ -94,9 +98,29 @@ void *thr_watch_file(void *threadarg)
 
 void *thr_watch_port(void *threadarg)
 {
+    int sockfd;
+    int server_port;
+    struct sockaddr_in cli_addr;
+    unsigned int clilen;
+    int newsockfd;
+
+    server_port = atoi((char *)threadarg);
+
+    sockfd = OpenListener(server_port, 2048);
+    if (!sockfd) {
+        Error(("Unable to open listener port! (%s)\n", strerror(errno)));
+    }
 
     while (1) {
+        clilen = sizeof(cli_addr);
+        newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
+        Debug(("got a socket connection\n"));
 
+        mark_updated();
+
+        if (newsockfd) {
+            close(newsockfd);
+        }
     }
 }
 
