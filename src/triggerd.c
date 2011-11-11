@@ -22,8 +22,6 @@ End-Doc
 #include "tcp.h"
 #include "util.h"
 
-char *exec_cmd = NULL;
-
 int dry_run = 0;
 int daemonize = 1;
 int skip_first = 0;
@@ -124,15 +122,20 @@ void *thr_watch_port(void *threadarg)
     }
 }
 
+#define MAX_CMDS = 100;
+
 int main(int argc, char *argv[])
 {
     pthread_t tids[100];
     int curtid = 0;
+    char *cmds[MAX_CMDS + 1];
+    int numcmds = 0;;
 
     long curupdates = 0;
     int rc;
 
     int c;
+    int i;
     int errcnt = 0;
     int changed;
     int watches = 0;
@@ -145,6 +148,15 @@ int main(int argc, char *argv[])
     /* add bind ip */
 
     while ((c = getopt(argc, argv, ":dfsne:p:w:h")) != -1) {
+        if (numcmds == MAX_CMDS) {
+            Error(("Max cmds reached!\n"));
+            exit(1);
+        }
+        if (curtid == MAX_THREADS) {
+            Error(("Max threads reached!\n"));
+            exit(1);
+        }
+
         switch (c) {
         case 'd':
             DEBUG = 1;
@@ -167,8 +179,8 @@ int main(int argc, char *argv[])
             break;
 
         case 'e':
-            Debug(("setting execution cmd to '%s'.\n", optarg));
-            exec_cmd = strdup(optarg);
+            Debug(("adding execution cmd '%s'.\n", optarg));
+            cmds[numcmds++] = strdup(optarg);
             break;
 
         case 'p':
@@ -208,7 +220,7 @@ int main(int argc, char *argv[])
             Error(("\t -d       - Enables debugging output\n"));
             Error(("\t -w path  - Enable file/dir watch and sets path (can be repeated)\n"));
             Error(("\t -p port  - Enable tcp listen and sets port (can be repeated)\n"));
-            Error(("\t -e cmd   - Sets execution command\n"));
+            Error(("\t -e cmd   - Sets execution command (can be repeated)\n"));
             Error(("\t -s       - Skip first update at startup\n"));
             exit(1);
         }
@@ -219,12 +231,14 @@ int main(int argc, char *argv[])
         BeDaemon(argv[0]);
     }
 
-    if (!exec_cmd) {
+    if (numcmds == 0) {
         Error(("No exec cmd specified, terminating.\n"));
+        exit(1);
     }
 
-    if (!watches) {
+    if (watches == 0) {
         Error(("No watch conditions specified, terminating.\n"));
+        exit(1);
     }
 
     /* main loop running updates */
@@ -242,7 +256,12 @@ int main(int argc, char *argv[])
             Debug(("update triggered, executing commands...\n"));
 
 /* should do with popen so we can support syslog or stdout within daemon */
-            system(exec_cmd);
+            for (i = 0; i < numcmds; i++) {
+                Debug(("Executing: %s\n", cmds[i]));
+                system(cmds[i]);
+            }
+
+            Debug(("execution of commands completed...\n"));
         }
         sleep(1);
     }
