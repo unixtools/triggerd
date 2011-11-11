@@ -26,7 +26,6 @@ End-Doc
 int dry_run = 0;
 int daemonize = 1;
 int skip_first = 0;
-char *syslog_tag = NULL;
 
 long updates = 0;
 pthread_mutex_t updates_mutex;
@@ -62,11 +61,8 @@ void *thr_watch_file(void *threadarg)
                     Debug(("mtime of '%s' changed, incrementing updates\n",
                            file));
                     mark_updated();
-                    if (syslog_tag) {
-                        syslog(LOG_DEBUG,
-                               "mtime of '%s' changed, triggering updates",
-                               file);
-                    }
+                    syslog(LOG_DEBUG,
+                           "mtime of '%s' changed, triggering updates", file);
                 }
             }
         } else {
@@ -89,35 +85,43 @@ void *thr_watch_port(void *threadarg)
 
     server_port = atoi((char *)threadarg);
 
-    sockfd = OpenListener(server_port, 2048);
+    Debug(("opening listener socket on port %d\n", server_port));
+    syslog(LOG_DEBUG, "opening listener socket on port %d", server_port);
+    sockfd = OpenListener(server_port, 10);
     if (!sockfd) {
         Error(("Unable to open listener port! (%s)\n", strerror(errno)));
-        if (syslog_tag) {
-            syslog(LOG_ERR, "unable to open listener port (%s)\n",
-                   strerror(errno));
-        }
+        syslog(LOG_ERR, "unable to open listener port (%s)\n", strerror(errno));
         exit(1);
     }
+    Debug(("opened listener socket on port %d\n", server_port));
+    syslog(LOG_DEBUG, "opened listener socket on port %d", server_port);
 
     while (1) {
         clilen = sizeof(cli_addr);
+
+        Debug(("waiting for socket connection\n"));
+        syslog(LOG_DEBUG, "waiting for socket connection");
+
         newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
 
         if (newsockfd) {
+            syslog(LOG_DEBUG, "got a socket connection");
             Debug(("got a socket connection\n"));
             cliaddr = clientaddr(newsockfd);
 
-            if (syslog_tag) {
-                syslog(LOG_DEBUG,
-                       "got a socket connection on port %d from %s, triggering updates",
-                       server_port, cliaddr);
+            syslog(LOG_DEBUG,
+                   "got a socket connection on port %d from %s, triggering updates",
+                   server_port, NullCk(cliaddr));
+
+            if (cliaddr) {
+                free(cliaddr);
             }
 
-            free(cliaddr);
-
             mark_updated();
-
             close(newsockfd);
+        } else {
+            syslog(LOG_ERR,
+                   "error accepting socket connection (%s)", strerror(errno));
         }
     }
 }
@@ -142,6 +146,9 @@ int main(int argc, char *argv[])
     int watches = 0;
 
     ARGV0 = argv[0];
+
+    /* Init syslogs */
+    openlog(NULL, LOG_PID, LOG_DAEMON);
 
     /* initialize mutex */
     pthread_mutex_init(&updates_mutex, NULL);
@@ -186,6 +193,7 @@ int main(int argc, char *argv[])
 
         case 'p':
             Debug(("spawning port listen thread for '%s'\n", optarg));
+            syslog(LOG_INFO, "spawning port listen thread for '%s'", optarg);
             rc = pthread_create(&tids[curtid++], NULL,
                                 thr_watch_port, (void *)strdup(optarg));
             watches++;
@@ -193,6 +201,7 @@ int main(int argc, char *argv[])
 
         case 'w':
             Debug(("spawning watch trigger thread for '%s'.\n", optarg));
+            syslog(LOG_INFO, "spawning watch trigger thread for '%s'", optarg);
             rc = pthread_create(&tids[curtid++], NULL,
                                 thr_watch_file, (void *)strdup(optarg));
             watches++;
@@ -200,7 +209,7 @@ int main(int argc, char *argv[])
 
         case 't':
             Debug(("setting syslog tag '%s'.\n", optarg));
-            syslog_tag = strdup(optarg);
+            openlog(optarg, LOG_PID, LOG_DAEMON);
             break;
 
         case ':':
@@ -243,22 +252,17 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    /* Init syslogs */
-    if (syslog_tag) {
-        openlog(syslog_tag, LOG_PID, LOG_DAEMON);
-    }
-
     /* Become daemon */
     if (daemonize) {
-        if (syslog_tag) {
-            syslog(LOG_INFO, "daemonizing");
-        }
+        syslog(LOG_INFO, "daemonizing");
         BeDaemon(argv[0]);
     }
 
-    if (syslog_tag) {
-        syslog(LOG_INFO, "starting main processing loop");
-    }
+    for (i = 0; i < numcmds; i++) {
+        syslog(LOG_INFO, "configured execution cmd: %s", cmds[i]);
+    };
+
+    syslog(LOG_INFO, "starting main processing loop");
 
     /* main loop running updates */
     while (1) {
@@ -273,25 +277,21 @@ int main(int argc, char *argv[])
 
         if (changed) {
             Debug(("update triggered, executing commands...\n"));
-            if (syslog_tag) {
-                syslog(LOG_INFO, "update triggered, executing commands");
-            }
+            syslog(LOG_INFO, "update triggered, executing commands");
 
 /* should do with popen so we can support syslog or stdout within daemon */
             for (i = 0; i < numcmds; i++) {
                 FILE *cmdfh;
 
                 Debug(("Executing: %s\n", cmds[i]));
-                if (syslog_tag) {
-                    syslog(LOG_INFO, "executing: %s", cmds[i]);
-                }
+                syslog(LOG_INFO, "executing: %s", cmds[i]);
 
                 cmdfh = popen(cmds[i], "r");
                 if (cmdfh) {
                     char cmdbuf[5000];
 
                     while (fgets(cmdbuf, 5000, cmdfh)) {
-                        if (!daemonize && !syslog_tag) {
+                        if (!daemonize) {
                             Trace(("%s", cmdbuf));
                         }
                         syslog(LOG_DEBUG, "%s", cmdbuf);
@@ -299,16 +299,12 @@ int main(int argc, char *argv[])
                     fclose(cmdfh);
                 } else {
                     Debug(("Failed to open pipe for command!\n"));
-                    if (syslog_tag) {
-                        syslog(LOG_ERR, "failed to open pipe for command");
-                    }
+                    syslog(LOG_ERR, "failed to open pipe for command");
                 }
             }
 
             Debug(("execution of commands completed...\n"));
-            if (syslog_tag) {
-                syslog(LOG_INFO, "execution of commands completed");
-            }
+            syslog(LOG_INFO, "execution of commands completed");
         }
         sleep(1);
     }
