@@ -243,14 +243,21 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    /* Become daemon */
-    if (daemonize) {
-        BeDaemon(argv[0]);
-    }
-
     /* Init syslogs */
     if (syslog_tag) {
         openlog(syslog_tag, LOG_PID, LOG_DAEMON);
+    }
+
+    /* Become daemon */
+    if (daemonize) {
+        if (syslog_tag) {
+            syslog(LOG_INFO, "daemonizing");
+        }
+        BeDaemon(argv[0]);
+    }
+
+    if (syslog_tag) {
+        syslog(LOG_INFO, "starting main processing loop");
     }
 
     /* main loop running updates */
@@ -296,8 +303,6 @@ int main(int argc, char *argv[])
                         syslog(LOG_ERR, "failed to open pipe for command");
                     }
                 }
-
-                system(cmds[i]);
             }
 
             Debug(("execution of commands completed...\n"));
