@@ -251,7 +251,7 @@ char *clientaddr(int fd)
     int len;
 
     len = sizeof(cli_addr);
-    getpeername(fd, (struct sockaddr *)&cli_addr, (void*) &len);
+    getpeername(fd, (struct sockaddr *)&cli_addr, (void *)&len);
 
     strcpy(address, inet_ntoa(cli_addr.sin_addr));
 
@@ -264,7 +264,7 @@ int clientport(int fd)
     int len;
 
     len = sizeof(cli_addr);
-    getpeername(fd, (struct sockaddr *)&cli_addr, (void *) &len);
+    getpeername(fd, (struct sockaddr *)&cli_addr, (void *)&len);
     return cli_addr.sin_port;
 }
 
