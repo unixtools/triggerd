@@ -46,6 +46,8 @@ void *thr_watch_file(void *threadarg)
     int first = 1;
     char *file = (char *)threadarg;
 
+    Debug(("starting file watch of '%s'\n", file));
+
     /* Main loop */
     bzero((char *)&oldstat, sizeof(struct stat));
     while (1) {
@@ -133,8 +135,15 @@ int main(int argc, char *argv[])
 {
     pthread_t tids[MAX_THREADS];
     int curtid = 0;
+
     char *cmds[MAX_CMDS + 1];
     int numcmds = 0;;
+
+    char *files[MAX_CMDS + 1];
+    int numfiles = 0;
+
+    char *ports[MAX_CMDS + 1];
+    int numports = 0;
 
     long curupdates = 0;
     int rc;
@@ -192,18 +201,14 @@ int main(int argc, char *argv[])
             break;
 
         case 'p':
-            Debug(("spawning port listen thread for '%s'\n", optarg));
-            syslog(LOG_INFO, "spawning port listen thread for '%s'", optarg);
-            rc = pthread_create(&tids[curtid++], NULL,
-                                thr_watch_port, (void *)strdup(optarg));
+            Debug(("adding port listen '%s'.\n", optarg));
+            ports[numports++] = strdup(optarg);
             watches++;
             break;
 
         case 'w':
-            Debug(("spawning watch trigger thread for '%s'.\n", optarg));
-            syslog(LOG_INFO, "spawning watch trigger thread for '%s'", optarg);
-            rc = pthread_create(&tids[curtid++], NULL,
-                                thr_watch_file, (void *)strdup(optarg));
+            Debug(("adding file watch '%s'.\n", optarg));
+            files[numfiles++] = strdup(optarg);
             watches++;
             break;
 
@@ -261,6 +266,28 @@ int main(int argc, char *argv[])
     for (i = 0; i < numcmds; i++) {
         syslog(LOG_INFO, "configured execution cmd: %s", cmds[i]);
     };
+
+    for (i = 0; i < numfiles; i++) {
+        Debug(("spawning watch trigger thread for '%s'.\n", files[i]));
+        syslog(LOG_INFO, "spawning watch trigger thread for '%s'", files[i]);
+        rc = pthread_create(&tids[curtid++], NULL,
+                            thr_watch_file, (void *)files[i]);
+        if (rc) {
+            syslog(LOG_ERR, "thread spawn failed: %d", rc);
+            exit(1);
+        }
+    };
+
+    for (i = 0; i < numports; i++) {
+        Debug(("spawning port listen thread for '%s'\n", ports[i]));
+        syslog(LOG_INFO, "spawning port listen thread for '%s'", ports[i]);
+        rc = pthread_create(&tids[curtid++], NULL,
+                            thr_watch_port, (void *)ports[i]);
+        if (rc) {
+            syslog(LOG_ERR, "thread spawn failed: %d", rc);
+            exit(1);
+        }
+    }
 
     syslog(LOG_INFO, "starting main processing loop");
 
