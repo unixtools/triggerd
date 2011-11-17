@@ -18,6 +18,7 @@ End-Doc
 #include <netinet/in.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>
+#include <pwd.h>
 
 #include "debug.h"
 #include "tcp.h"
@@ -154,6 +155,8 @@ int main(int argc, char *argv[])
     int changed;
     int watches = 0;
 
+    char *setuser = NULL;
+
     ARGV0 = argv[0];
 
     /* Init syslogs */
@@ -164,7 +167,7 @@ int main(int argc, char *argv[])
 
     /* add bind ip */
 
-    while ((c = getopt(argc, argv, ":dfsne:p:w:ht:")) != -1) {
+    while ((c = getopt(argc, argv, ":dfsne:p:w:ht:u:")) != -1) {
         if (numcmds == MAX_CMDS) {
             Error(("Max cmds reached!\n"));
             exit(1);
@@ -217,6 +220,11 @@ int main(int argc, char *argv[])
             openlog(optarg, LOG_PID, LOG_DAEMON);
             break;
 
+        case 'u':
+            Debug(("will run as user '%s'.\n", optarg));
+            setuser = strdup(optarg);
+            break;
+
         case ':':
             fprintf(stderr, "Option -%c requires argument!\n", optopt);
             errcnt++;
@@ -235,14 +243,15 @@ int main(int argc, char *argv[])
         if (errcnt) {
             Error(("Usage:\n"));
             Error(("\t%s <arguments>\n\n", ARGV0));
-            Error(("\t -h       - Prints help\n"));
-            Error(("\t -f       - Stay in foreground\n"));
-            Error(("\t -d       - Enables debugging output\n"));
-            Error(("\t -w path  - Enable file/dir watch and sets path (can be repeated)\n"));
-            Error(("\t -p port  - Enable tcp listen and sets port (can be repeated)\n"));
-            Error(("\t -e cmd   - Sets execution command (can be repeated)\n"));
-            Error(("\t -s       - Skip first update at startup\n"));
-            Error(("\t -t tag   - Enable syslog output labelled with 'tag'\n"));
+            Error(("\t -h        - Prints help\n"));
+            Error(("\t -f        - Stay in foreground\n"));
+            Error(("\t -d        - Enables debugging output\n"));
+            Error(("\t -w path   - Enable file/dir watch and sets path (can be repeated)\n"));
+            Error(("\t -p port   - Enable tcp listen and sets port (can be repeated)\n"));
+            Error(("\t -e cmd    - Sets execution command (can be repeated)\n"));
+            Error(("\t -s        - Skip first update at startup\n"));
+            Error(("\t -t tag    - Enable syslog output labelled with 'tag'\n"));
+            Error(("\t -u userid - Set uid/gid to user 'userid'\n"));
             exit(1);
         }
     }
@@ -257,6 +266,27 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    if (setuser) {
+        struct passwd *user;
+
+        if (!(user = getpwnam(setuser))) {
+            Error(("Failed to look up user '%s'\n", setuser));
+            exit(1);
+        }
+
+        if (setgid(user->pw_gid)) {
+            Error(("Failed to switch gid to '%d' for user '%s'\n",
+                   user->pw_gid, setuser));
+            exit(1);
+        }
+        if (setuid(user->pw_uid)) {
+            Error(("Failed to switch uid to '%d' for user '%s'\n",
+                   user->pw_uid, setuser));
+            exit(1);
+        }
+
+    }
+
     /* Become daemon */
     if (daemonize) {
         syslog(LOG_INFO, "daemonizing");
@@ -266,12 +296,12 @@ int main(int argc, char *argv[])
     for (i = 0; i < numcmds; i++) {
         syslog(LOG_INFO, "configured execution cmd: %s", cmds[i]);
     };
-
     for (i = 0; i < numfiles; i++) {
         Debug(("spawning watch trigger thread for '%s'.\n", files[i]));
         syslog(LOG_INFO, "spawning watch trigger thread for '%s'", files[i]);
-        rc = pthread_create(&tids[curtid++], NULL,
-                            thr_watch_file, (void *)files[i]);
+
+        rc = pthread_create(&tids[curtid++], NULL, thr_watch_file,
+                            (void *)files[i]);
         if (rc) {
             syslog(LOG_ERR, "thread spawn failed: %d", rc);
             exit(1);
@@ -281,8 +311,9 @@ int main(int argc, char *argv[])
     for (i = 0; i < numports; i++) {
         Debug(("spawning port listen thread for '%s'\n", ports[i]));
         syslog(LOG_INFO, "spawning port listen thread for '%s'", ports[i]);
-        rc = pthread_create(&tids[curtid++], NULL,
-                            thr_watch_port, (void *)ports[i]);
+
+        rc = pthread_create(&tids[curtid++], NULL, thr_watch_port,
+                            (void *)ports[i]);
         if (rc) {
             syslog(LOG_ERR, "thread spawn failed: %d", rc);
             exit(1);
@@ -290,7 +321,6 @@ int main(int argc, char *argv[])
     }
 
     syslog(LOG_INFO, "starting main processing loop");
-
     /* main loop running updates */
     while (1) {
         changed = 0;

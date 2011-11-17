@@ -1,7 +1,7 @@
 
 Summary: triggerd Tool
 Name: triggerd
-Version: 1.1
+Version: 1.2
 Release: 1
 License: Distributable
 Group: System Environment/Utilities
