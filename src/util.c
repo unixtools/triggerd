@@ -12,15 +12,14 @@ End-Doc
 #include <sys/time.h>
 #include "debug.h"
 
-int mysleep(int msecs)
-{
-    struct timeval tmp;
-    tmp.tv_sec = 0;
-    tmp.tv_usec = msecs * 1000;
-    select(0, NULL, NULL, NULL, &tmp);
-    return (0);
-}
-
+/* 
+Begin-Doc
+Name: BeDaemon
+Description: daemonize process
+Syntax: BeDaemon(progname)
+Returns: process id
+End-Doc
+*/
 int BeDaemon(char *pgm)
 {
     int childpid;

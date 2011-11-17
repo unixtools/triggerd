@@ -31,6 +31,13 @@ int skip_first = 0;
 long updates = 0;
 pthread_mutex_t updates_mutex;
 
+/* 
+Begin-Doc
+Name: markupdated
+Description: log and set globals to indicate trigger has fired
+Syntax: mark_updated();
+End-Doc
+*/
 void mark_updated(void)
 {
     pthread_mutex_lock(&updates_mutex);
@@ -40,6 +47,13 @@ void mark_updated(void)
     pthread_mutex_unlock(&updates_mutex);
 }
 
+/* 
+Begin-Doc
+Name: thr_watch_file
+Description: thread handler to watch a file
+Syntax: thr_watch_file(filename)
+End-Doc
+*/
 void *thr_watch_file(void *threadarg)
 {
     struct stat curstat, oldstat;
@@ -77,6 +91,13 @@ void *thr_watch_file(void *threadarg)
     }
 }
 
+/* 
+Begin-Doc
+Name: thr_watch_port
+Description: thread handler to listen to a tcp port
+Syntax: thr_watch_port(port_in_string_form)
+End-Doc
+*/
 void *thr_watch_port(void *threadarg)
 {
     int sockfd;
@@ -132,6 +153,12 @@ void *thr_watch_port(void *threadarg)
 #define MAX_CMDS 100
 #define MAX_THREADS 100
 
+/* 
+Begin-Doc
+Name: main
+Description: main program
+End-Doc
+*/
 int main(int argc, char *argv[])
 {
     pthread_t tids[MAX_THREADS];

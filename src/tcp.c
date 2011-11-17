@@ -29,9 +29,14 @@ End-Doc
 #include "debug.h"
 #include "tcp.h"
 
-/*
- * Convert a string to lowercase in place
- */
+/* 
+Begin-Doc
+Name: stolower
+Description: convert string to lowercase in place
+Syntax: stolower(string)
+End-Doc
+*/
+
 void stolower(char *str)
 {
     int i;
@@ -44,9 +49,13 @@ void stolower(char *str)
     }
 }
 
-/*
- * Read a line from a socket, similar to fgets for file i/o.
- */
+/* 
+Begin-Doc
+Name: readline
+Description: read a line from a socket, similar to fgets for file i/o
+Syntax: readline(ptr, maxlen, fd)
+End-Doc
+*/
 
 int readline(char *ptr, int maxlen, int fd)
 {
@@ -71,14 +80,26 @@ int readline(char *ptr, int maxlen, int fd)
     return (n);
 }
 
-/*
- * Write a line from a null terminated string to a socket
- */
+/* 
+Begin-Doc
+Name: writeline
+Description: write a line from null terminated string to a socket
+Syntax: writeline(fd,ptr)
+End-Doc
+*/
 
 int writeline(int fd, char *ptr)
 {
     return writen(fd, ptr, strlen(ptr));
 }
+
+/* 
+Begin-Doc
+Name: writen
+Description: write bytes from a string to a socket with repeats if needed
+Syntax: writen(fd, ptr, nbytes)
+End-Doc
+*/
 
 int writen(register int fd, register char *ptr, register int nbytes)
 {
@@ -96,9 +117,13 @@ int writen(register int fd, register char *ptr, register int nbytes)
     return (nbytes - nleft);
 }
 
-/*
- * Resolve a host address from either a dotted quad or a FQDN
- */
+/* 
+Begin-Doc
+Name: resolve
+Description: look up an name or dotted quad to ip addr in string form 
+Syntax: addr = resolve(hostname)
+End-Doc
+*/
 
 char *resolve(char *addr)
 {
@@ -128,9 +153,13 @@ char *resolve(char *addr)
     return "";
 }
 
-/*
- * Resolve a host address from either a dotted quad or a FQDN
- */
+/* 
+Begin-Doc
+Name: rresolve
+Description: look up an ip addr to get hostname
+Syntax: hostname = rresolve(ipaddr)
+End-Doc
+*/
 
 char *rresolve(char *addr)
 {
@@ -152,9 +181,13 @@ char *rresolve(char *addr)
     return address;
 }
 
-/*
- * Open an active connection to a host returning the socket file descriptor
- */
+/* 
+Begin-Doc
+Name: OpenConnection
+Description: tcp connect to remote host and port
+Syntax: fd = OpenConnection(host,port)
+End-Doc
+*/
 
 int OpenConnection(char *host, int port)
 {
@@ -195,18 +228,25 @@ int OpenConnection(char *host, int port)
 }
 
 /* 
- * Close a connection to a socket
- */
+Begin-Doc
+Name: CloseConnection
+Description: Close socket connection
+Syntax: CloseConnection(sockfd)
+End-Doc
+*/
 
 void CloseConnection(int sockfd)
 {
     close(sockfd);
 }
 
-/*
- * Open a passive listener connection on a port, returning the socket fd
- */
-
+/* 
+Begin-Doc
+Name: OpenListener
+Description: open a listening tcp socket
+Syntax: fd = OpenListener(port, backlog)
+End-Doc
+*/
 int OpenListener(int port, int count)
 {
     int sockfd;
@@ -239,11 +279,13 @@ int OpenListener(int port, int count)
     return sockfd;
 }
 
-/*
- * Return a string containing the ip address of the host that is connected on 
- * this socket.
- */
-
+/* 
+Begin-Doc
+Name: clientaddr
+Description: Return a string containing the ip address of the host that is connected on the socket
+Syntax: clienthost = clientaddr(fd)
+End-Doc
+*/
 char *clientaddr(int fd)
 {
     struct sockaddr_in cli_addr;
@@ -258,6 +300,13 @@ char *clientaddr(int fd)
     return strdup(address);
 }
 
+/* 
+Begin-Doc
+Name: clientport
+Description: Return a int containing the remote port of the host that is connected on the socket
+Syntax: port = clientport(fd)
+End-Doc
+*/
 int clientport(int fd)
 {
     struct sockaddr_in cli_addr;
@@ -268,10 +317,13 @@ int clientport(int fd)
     return cli_addr.sin_port;
 }
 
-/*
- * Check if a address string is actually a valid address (format wise)
- */
-
+/* 
+Begin-Doc
+Name: validaddr
+Description: Check if an address string is a valid dotted quad
+Syntax: valid = validaddr(addr)
+End-Doc
+*/
 int validaddr(char *addr)
 {
     char address[40];
