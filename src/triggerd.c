@@ -33,7 +33,7 @@ pthread_mutex_t updates_mutex;
 
 /* 
 Begin-Doc
-Name: markupdated
+Name: mark_updated
 Description: log and set globals to indicate trigger has fired
 Syntax: mark_updated();
 End-Doc
