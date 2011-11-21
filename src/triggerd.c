@@ -195,15 +195,6 @@ int main(int argc, char *argv[])
     /* add bind ip */
 
     while ((c = getopt(argc, argv, ":dfsne:p:w:ht:u:")) != -1) {
-        if (numcmds == MAX_CMDS) {
-            Error(("Max cmds reached!\n"));
-            exit(1);
-        }
-        if (curtid == MAX_THREADS) {
-            Error(("Max threads reached!\n"));
-            exit(1);
-        }
-
         switch (c) {
         case 'd':
             DEBUG = 1;
@@ -226,20 +217,35 @@ int main(int argc, char *argv[])
             break;
 
         case 'e':
-            Debug(("adding execution cmd '%s'.\n", optarg));
-            cmds[numcmds++] = strdup(optarg);
+            if (numcmds >= MAX_CMDS) {
+                Error(("Max cmds reached!\n"));
+                exit(1);
+            } else {
+                Debug(("adding execution cmd '%s'.\n", optarg));
+                cmds[numcmds++] = strdup(optarg);
+            }
             break;
 
         case 'p':
-            Debug(("adding port listen '%s'.\n", optarg));
-            ports[numports++] = strdup(optarg);
-            watches++;
+            if (numports >= MAX_CMDS) {
+                Error(("Max ports reached!\n"));
+                exit(1);
+            } else {
+                Debug(("adding port listen '%s'.\n", optarg));
+                ports[numports++] = strdup(optarg);
+                watches++;
+            }
             break;
 
         case 'w':
-            Debug(("adding file watch '%s'.\n", optarg));
-            files[numfiles++] = strdup(optarg);
-            watches++;
+            if (numfiles >= MAX_CMDS) {
+                Error(("Max file watches reached!\n"));
+                exit(1);
+            } else {
+                Debug(("adding file watch '%s'.\n", optarg));
+                files[numfiles++] = strdup(optarg);
+                watches++;
+            }
             break;
 
         case 't':
@@ -312,6 +318,11 @@ int main(int argc, char *argv[])
             exit(1);
         }
 
+    }
+
+    if (numfiles + numports > MAX_THREADS) {
+        Error(("Too many commands/files, won't have enough thread slots!\n"));
+        exit(1);
     }
 
     /* Become daemon */
