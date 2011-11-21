@@ -326,27 +326,14 @@ End-Doc
 */
 int validaddr(char *addr)
 {
-    char address[40];
-    char *a1, *a2, *a3, *a4;
-    int i;
+    struct in_addr outaddr;
 
     if (!addr) {
         return (1);
     }
 
-    for (i = 0; i < strlen(addr); i++) {
-        if (!isdigit(addr[i]) || (addr[i] == '.')) {
-            return (1);
-        }
-    }
-
-    strcpy(address, addr);
-    a1 = (char *)strtok(address, ".");
-    a2 = (char *)strtok(NULL, ".");
-    a3 = (char *)strtok(NULL, ".");
-    a4 = (char *)strtok(NULL, ".");
-
-    if (!a1 || !a2 || !a3 || !a4) {
+    if (inet_aton(addr, &outaddr) == 0 )
+    {
         return (1);
     }
 
