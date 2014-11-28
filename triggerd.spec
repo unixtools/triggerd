@@ -1,15 +1,15 @@
 
 Summary: triggerd Tool
 Name: triggerd
-Version: 1.4
+Version: 1.5
 Release: 1
 License: Distributable
 Group: System Environment/Utilities
 AutoReqProv: no
 
-Packager: Nathan Neulinger <nneul@mst.edu>
+Packager: Nathan Neulinger <nneul@neulinger.org>
 
-Source: triggerd.tar.gz
+Source: triggerd-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 
 %description
