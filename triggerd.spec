@@ -16,14 +16,14 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 This contains the triggerd utility.
 
 %prep
-%setup -c -q -n triggerd
+%setup -c -q -n triggerd-%{version}
 
 %build
-cd triggerd
+cd triggerd-%{version}
 make 
 
 %install
-cd triggerd
+cd triggerd-%{version}
 make SBINDIR=%{buildroot}%{_sbindir} install
 
 %post
