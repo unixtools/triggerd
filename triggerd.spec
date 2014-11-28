@@ -2,7 +2,7 @@
 Summary: triggerd Tool
 Name: triggerd
 Version: 1.5
-Release: 1
+Release: 1%{?dist}
 License: Distributable
 Group: System Environment/Utilities
 AutoReqProv: no
@@ -16,7 +16,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 This contains the triggerd utility.
 
 %prep
-%setup -c -q -n triggerd-%{version}
+%setup -c -q -n triggerd
 
 %build
 cd triggerd-%{version}
