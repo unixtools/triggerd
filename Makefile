@@ -6,7 +6,7 @@ CC=gcc -O2 -Wall
 all: triggerd
 
 clean:
-	rm -f *.o
+	rm -f *.o *.tar.gz triggerd
 
 triggerd: triggerd.o tcp.o util.o debug.o
 	$(CC) -o triggerd triggerd.o tcp.o util.o debug.o -lpthread
