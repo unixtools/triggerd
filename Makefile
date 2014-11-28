@@ -1,3 +1,5 @@
+VERSION=1.0
+
 SBINDIR=/usr/sbin
 CC=gcc -O2 -Wall
 
@@ -14,11 +16,12 @@ install:
 	install -m0755 triggerd $(SBINDIR)/triggerd
 
 dist: clean
-	cp -pr ../src ../triggerd
-	find ../triggerd -depth -name .svn -exec rm -rf {} \;
-	rm -f triggerd.tar.gz
-	cd .. && gtar -czvf triggerd.tar.gz triggerd
-	rm -rf ../triggerd
+	rm -rf /tmp/triggerd-$(VERSION)
+	mkdir /tmp/triggerd-$(VERSION)
+	cp -pr . /tmp/triggerd-$(VERSION)
+	cd /tmp/triggerd-$(VERSION) && rm -rf *.gz .git .gitignore
+	tar -C/tmp -czvf triggerd-$(VERSION).tar.gz triggerd-$(VERSION)
+	rm -rf /tmp/triggerd-$(VERSION)
 
 indent:
 	indent -linux -nut -ts4 -i4 *.c *.h
