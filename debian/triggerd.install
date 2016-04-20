@@ -1,2 +1,1 @@
-/etc/profile.d/triggerd.sh
-/usr/lib/triggerd/git
+/usr/sbin/triggerd

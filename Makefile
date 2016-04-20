@@ -1,6 +1,6 @@
-VERSION=1.6
+VERSION=1.6.0
 
-SBINDIR=/usr/sbin
+SBINDIR=$(DESTDIR)/usr/sbin
 CC=gcc -O2 -Wall
 TOP=`pwd`
 
