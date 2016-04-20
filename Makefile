@@ -1,4 +1,4 @@
-VERSION=1.5
+VERSION=1.6
 
 SBINDIR=/usr/sbin
 CC=gcc -O2 -Wall
