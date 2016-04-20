@@ -1,3 +1,8 @@
 *.tar.gz
 *.o
 triggerd
+debian/files
+debian/triggerd.debhelper.log
+debian/triggerd.substvars
+debian/triggerd/
+debian/tmp/
