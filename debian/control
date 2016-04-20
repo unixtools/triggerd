@@ -1,0 +1,13 @@
+Priority: optional
+Maintainer: Nathan Neulinger <nneul@neulinger.org>
+Source: triggerd
+Build-Depends: debhelper (>= 8)
+Standards-Version: 3.9.1
+Homepage: 
+
+Package: triggerd
+Section: utils
+Architecture: any
+Depends: libglib2.0-0
+Description: This contains the triggerd bash profile scripts.
+
