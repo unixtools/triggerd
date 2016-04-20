@@ -332,8 +332,7 @@ int validaddr(char *addr)
         return (1);
     }
 
-    if (inet_aton(addr, &outaddr) == 0 )
-    {
+    if (inet_aton(addr, &outaddr) == 0) {
         return (1);
     }
 

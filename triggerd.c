@@ -377,24 +377,33 @@ int main(int argc, char *argv[])
 /* should do with popen so we can support syslog or stdout within daemon */
             for (i = 0; i < numcmds; i++) {
                 FILE *cmdfh;
+                char *tmpcmd;
 
                 Debug(("Executing: %s\n", cmds[i]));
                 syslog(LOG_INFO, "executing: %s", cmds[i]);
 
-                cmdfh = popen(cmds[i], "r");
-                if (cmdfh) {
-                    char cmdbuf[5000];
-
-                    while (fgets(cmdbuf, 5000, cmdfh)) {
-                        if (!daemonize) {
-                            Trace(("%s", cmdbuf));
-                        }
-                        syslog(LOG_DEBUG, "%s", cmdbuf);
-                    }
-                    fclose(cmdfh);
+                tmpcmd = calloc(strlen(cmds[i]) + 10, 1);
+                if (!tmpcmd) {
+                    Debug(("Failed to allocate memory for command!\n"));
+                    syslog(LOG_ERR, "failed to allocate memory for command");
                 } else {
-                    Debug(("Failed to open pipe for command!\n"));
-                    syslog(LOG_ERR, "failed to open pipe for command");
+                    snprintf(tmpcmd, strlen(cmds[i]) + 10, "%s 2>&1", cmds[i]);
+                    cmdfh = popen(tmpcmd, "r");
+                    free(tmpcmd);
+                    if (cmdfh) {
+                        char cmdbuf[5000];
+
+                        while (fgets(cmdbuf, 5000, cmdfh)) {
+                            if (!daemonize) {
+                                Trace(("%s", cmdbuf));
+                            }
+                            syslog(LOG_DEBUG, "%s", cmdbuf);
+                        }
+                        fclose(cmdfh);
+                    } else {
+                        Debug(("Failed to open pipe for command!\n"));
+                        syslog(LOG_ERR, "failed to open pipe for command");
+                    }
                 }
             }
 
