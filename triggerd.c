@@ -19,6 +19,7 @@ End-Doc
 #include <sys/errno.h>
 #include <sys/syslog.h>
 #include <pwd.h>
+#include <fcntl.h>
 
 #include "debug.h"
 #include "tcp.h"
@@ -119,6 +120,8 @@ void *thr_watch_port(void *threadarg)
     }
     Debug(("opened listener socket on port %d\n", server_port));
     syslog(LOG_DEBUG, "opened listener socket on port %d", server_port);
+
+    fcntl(sockfd, F_SETFD, fcntl(sockfd, F_GETFD) | FD_CLOEXEC);
 
     while (1) {
         clilen = sizeof(cli_addr);
